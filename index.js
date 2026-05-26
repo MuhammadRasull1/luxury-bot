@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { Telegraf, Markup } = require('telegraf');
+const http = require('http'); // Добавили стандартный модуль для фейкового сервера
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
@@ -129,17 +130,25 @@ bot.hears(['🛍 Каталог', '🛍 Catalog', '🛍 Katalog'], async (ctx) =
     }
 });
 
-// Обработка клика по кнопке «В корзину» (Ловит все callback-и, начинающиеся с add_)
+// Обработка клика по кнопке «В корзину»
 bot.action(/^add_/, async (ctx) => {
     const id = ctx.from.id;
-    // Всплывающее окошко в телеграме (alert) о том, что товар добавлен
     await ctx.answerCbQuery(getText(id, 'added'));
 });
 
 bot.hears(['🛒 Корзина', '🛒 Cart', '🛒 Savat'], (ctx) => ctx.reply('Корзина пуста'));
 bot.hears(['👤 Профиль', '👤 Profile', '👤 Profil'], (ctx) => ctx.reply(`ID: ${ctx.from.id}`));
 
-// Запуск
+// Запуск бота
 bot.launch({ dropPendingUpdates: true })
   .then(() => console.log('✅ Бот запущен!'))
   .catch(err => console.error(err));
+
+// ФЕЙКОВЫЙ СЕРВЕР ДЛЯ RENDER (Чтобы не было ошибки Port Scan Timeout)
+const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Bot is running alive!\n');
+}).listen(PORT, () => {
+    console.log(`Слушаем порт ${PORT} для заглушки Render`);
+});
